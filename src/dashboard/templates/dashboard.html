@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberAIBot Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .status-card {
+            transition: transform 0.2s;
+        }
+        .status-card:hover {
+            transform: translateY(-2px);
+        }
+        .threat-high { color: #dc3545; }
+        .threat-medium { color: #fd7e14; }
+        .threat-low { color: #28a745; }
+        .threat-critical { color: #6f42c1; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-shield-alt"></i> CyberAIBot
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">Dashboard</a>
+                <a class="nav-link" href="/clusters">Clusters</a>
+                <a class="nav-link" href="/monitoring">Monitoring</a>
+                <a class="nav-link" href="/threats">Threats</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- System Status Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card status-card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">System Status</h6>
+                                <h4>{{ "Running" if status.is_running else "Stopped" }}</h4>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-server fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card status-card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Active Clusters</h6>
+                                <h4>{{ status.clusters|length }}</h4>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-network-wired fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card status-card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">CPU Usage</h6>
+                                <h4>{{ "%.1f"|format(metrics.system_metrics.cpu_usage) }}%</h4>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-microchip fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card status-card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Memory Usage</h6>
+                                <h4>{{ "%.1f"|format(metrics.system_metrics.memory_usage) }}%</h4>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-memory fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-line"></i> Attack Type Distribution</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="attackChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-pie"></i> Threat Severity</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="severityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Decisions -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-history"></i> Recent Decisions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>Attack Type</th>
+                                        <th>Prediction</th>
+                                        <th>Confidence</th>
+                                        <th>Severity</th>
+                                        <th>Conflicts</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for decision in recent_decisions %}
+                                    <tr>
+                                        <td>{{ decision.timestamp|datetime }}</td>
+                                        <td>{{ decision.decision.attack_type }}</td>
+                                        <td>{{ decision.decision.prediction }}</td>
+                                        <td>{{ "%.2f"|format(decision.decision.confidence) }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if decision.decision.severity == 'Critical' %}bg-danger
+                                                {% elif decision.decision.severity == 'High' %}bg-warning
+                                                {% elif decision.decision.severity == 'Medium' %}bg-info
+                                                {% else %}bg-success{% endif %}">
+                                                {{ decision.decision.severity }}
+                                            </span>
+                                        </td>
+                                        <td>{{ decision.decision.conflicts_detected }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Attack Type Distribution Chart
+        const attackCtx = document.getElementById('attackChart').getContext('2d');
+        const attackChart = new Chart(attackCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Benign', 'DoS', 'DDoS', 'Botnet', 'Brute Force', 'Other'],
+                datasets: [{
+                    data: [45, 15, 10, 8, 7, 15],
+                    backgroundColor: [
+                        '#28a745',
+                        '#dc3545',
+                        '#fd7e14',
+                        '#6f42c1',
+                        '#20c997',
+                        '#6c757d'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Threat Severity Chart
+        const severityCtx = document.getElementById('severityChart').getContext('2d');
+        const severityChart = new Chart(severityCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Low', 'Medium', 'High', 'Critical'],
+                datasets: [{
+                    label: 'Threat Count',
+                    data: [25, 15, 8, 3],
+                    backgroundColor: [
+                        '#28a745',
+                        '#fd7e14',
+                        '#dc3545',
+                        '#6f42c1'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            location.reload();
+        }, 30000);
+    </script>
+</body>
+</html>

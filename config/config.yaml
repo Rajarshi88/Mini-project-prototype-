@@ -1,0 +1,102 @@
+# CyberAIBot Configuration
+
+# System Configuration
+system:
+  name: "CyberAIBot"
+  version: "1.0.0"
+  debug: true
+  log_level: "INFO"
+
+# Model Configuration
+models:
+  lstm:
+    hidden_units: 128
+    dropout: 0.3
+    recurrent_dropout: 0.2
+    epochs: 100
+    batch_size: 32
+    learning_rate: 0.001
+    early_stopping_patience: 10
+    
+  svm:
+    kernel: "rbf"
+    C: 1.0
+    gamma: "scale"
+    max_iter: 1000
+
+# Technical Clusters Configuration
+technical_clusters:
+  attack_types:
+    - "DoS"
+    - "DDoS" 
+    - "Botnet"
+    - "Brute_Force"
+    - "Spoofing"
+    - "Probing"
+    - "Injection"
+    - "Data_Theft"
+    - "Benign"
+  
+  model_types:
+    - "lstm"
+    - "svm"
+
+# Management Cluster Configuration
+management_cluster:
+  confidence_threshold: 0.7
+  conflict_resolution: "weighted_voting"
+  ensemble_weights:
+    lstm: 0.6
+    svm: 0.4
+
+# Data Processing Configuration
+data_processing:
+  feature_selection:
+    method: "correlation"
+    threshold: 0.95
+    max_features: 50
+  
+  normalization:
+    method: "minmax"
+    range: [0, 1]
+  
+  window_size: 10
+  overlap: 0.5
+
+# API Configuration
+api:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+  timeout: 30
+
+# Dashboard Configuration
+dashboard:
+  host: "0.0.0.0"
+  port: 8080
+  auto_reload: true
+
+# Database Configuration
+database:
+  type: "sqlite"
+  path: "data/cyberai_bot.db"
+  pool_size: 10
+
+# Monitoring Configuration
+monitoring:
+  metrics_port: 9090
+  health_check_interval: 30
+  alert_thresholds:
+    cpu_usage: 80
+    memory_usage: 85
+    response_time: 1000
+
+# Edge Deployment Configuration
+edge:
+  resource_limits:
+    cpu: "2"
+    memory: "4Gi"
+  auto_scaling:
+    enabled: true
+    min_replicas: 1
+    max_replicas: 5
